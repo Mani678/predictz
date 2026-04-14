@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<!-- VIEWPORT — critical for mobile, prevents zoom on input tap (iOS) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+<!-- PWA / App Meta -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PredictX">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#03050b">
+
+<!-- SEO + Share -->
+<title>PredictX — Predict UP or DOWN. Win PREDICT.</title>
+<meta name="description" content="High-frequency synthetic prediction game. Bet UP or DOWN every 30 seconds. Free to play.">
+
+<!-- Open Graph (for link previews on WhatsApp, Telegram, X) -->
+<meta property="og:title" content="PredictX — Can you predict the move?">
+<meta property="og:description" content="Bet UP or DOWN on a live synthetic price feed. Free tokens. Real competition. Rounds every 30 seconds.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/og-image.png">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PredictX — Can you predict the move?">
+<meta name="twitter:description" content="Bet UP or DOWN every 30 seconds. Free to play. Real-time leaderboard.">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- Apple Touch Icon (shows on iOS home screen) -->
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+
+<style>
+/* Prevent flash of white on load */
+html { background: #03050b; }
+/* Prevent overscroll bounce showing white on iOS */
+body { background: #03050b; overscroll-behavior: none; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     PASTE YOUR FULL GAME HTML HERE
+     (everything from <style> to end of <script> tag)
+     from the last widget Claude built
+     ═══════════════════════════════════════════════════════ -->
+
+<script>
+  // Register service worker for PWA (offline support)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
