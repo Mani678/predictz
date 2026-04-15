@@ -2,62 +2,400 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<!-- VIEWPORT — critical for mobile, prevents zoom on input tap (iOS) -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-
-<!-- PWA / App Meta -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PredictX">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#03050b">
-
-<!-- SEO + Share -->
 <title>PredictX — Predict UP or DOWN. Win PREDICT.</title>
 <meta name="description" content="High-frequency synthetic prediction game. Bet UP or DOWN every 30 seconds. Free to play.">
-
-<!-- Open Graph (for link previews on WhatsApp, Telegram, X) -->
 <meta property="og:title" content="PredictX — Can you predict the move?">
 <meta property="og:description" content="Bet UP or DOWN on a live synthetic price feed. Free tokens. Real competition. Rounds every 30 seconds.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/og-image.png">
-
-<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="PredictX — Can you predict the move?">
 <meta name="twitter:description" content="Bet UP or DOWN every 30 seconds. Free to play. Real-time leaderboard.">
-
-<!-- PWA Manifest -->
 <link rel="manifest" href="/manifest.json">
-
-<!-- Apple Touch Icon (shows on iOS home screen) -->
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-/* Prevent flash of white on load */
-html { background: #03050b; }
-/* Prevent overscroll bounce showing white on iOS */
-body { background: #03050b; overscroll-behavior: none; }
+html{background:#03050b}
+body{background:#03050b;overscroll-behavior:none;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;overscroll-behavior:none}
+#root{background:#03050b;color:#e0e3ec;font-family:'DM Mono',monospace;min-height:100dvh;display:flex;flex-direction:column;position:relative;max-width:480px;margin:0 auto}
+.syne{font-family:'Syne',sans-serif}
+.btn-up{background:#00f07a;color:#011208;border:none;cursor:pointer;border-radius:14px;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;padding:18px 0;min-height:60px;flex:1;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:opacity .1s;letter-spacing:.01em;position:relative;overflow:hidden;user-select:none}
+.btn-up:active:not(:disabled){opacity:.82;transform:scale(.97)}
+.btn-up:disabled{opacity:.22;cursor:not-allowed}
+.btn-dn{background:#f03055;color:#12010a;border:none;cursor:pointer;border-radius:14px;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;padding:18px 0;min-height:60px;flex:1;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:opacity .1s;letter-spacing:.01em;position:relative;overflow:hidden;user-select:none}
+.btn-dn:active:not(:disabled){opacity:.82;transform:scale(.97)}
+.btn-dn:disabled{opacity:.22;cursor:not-allowed}
+.tab{background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Mono',monospace;color:rgba(224,227,236,.28);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:11px 14px;min-height:44px;-webkit-tap-highlight-color:transparent;transition:color .15s;white-space:nowrap}
+.tab.on{color:#00f07a;border-bottom-color:#00f07a}
+.sl{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;outline:none;cursor:pointer;padding:0;border:none}
+.sl::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:rgba(255,255,255,.12)}
+.sl::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;background:#00f07a;margin-top:-12px;box-shadow:0 0 10px rgba(0,240,122,.6)}
+.sl::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.12);border:none}
+.sl::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#00f07a;border:none;box-shadow:0 0 10px rgba(0,240,122,.6)}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:env(safe-area-inset-bottom,16px)}
+@keyframes cffall{to{transform:translateY(900px) rotate(960deg);opacity:0}}
+@keyframes popIn{0%{transform:translateX(-50%) scale(.65);opacity:0}65%{transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1);opacity:1}}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{opacity:1;transform:none}}
+@keyframes timerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes timerFast{0%,100%{transform:scale(1)}40%{transform:scale(1.14)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-5px)}35%{transform:translateX(5px)}55%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes winFlash{0%{background:#03050b}30%{background:rgba(0,240,122,.13)}100%{background:#03050b}}
+@keyframes loseFlash{0%{background:#03050b}30%{background:rgba(240,48,85,.13)}100%{background:#03050b}}
+@keyframes glowY{0%,100%{border-color:rgba(245,200,66,.3)}50%{border-color:rgba(245,200,66,.85)}}
+@keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes floatUp{0%{transform:translateX(-50%) translateY(0);opacity:1}100%{transform:translateX(-50%) translateY(-70px);opacity:0}}
+.ldot{width:5px;height:5px;border-radius:50%;background:#00f07a;display:inline-block;margin-right:4px;animation:blink 1.1s infinite;vertical-align:middle}
+.notif{position:fixed;top:env(safe-area-inset-top,14px);left:50%;transform:translateX(-50%);background:rgba(2,4,11,.97);border:1px solid rgba(0,240,122,.5);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap;pointer-events:none;opacity:0;max-width:90vw;text-align:center}
+.cf{position:fixed;pointer-events:none;z-index:998;animation:cffall linear forwards}
+.floatPRD{position:fixed;font-family:'Syne',sans-serif;font-size:24px;font-weight:800;pointer-events:none;z-index:997;left:50%;animation:floatUp 1s ease forwards}
+.actFeed{font-size:11px;color:rgba(224,227,236,.4);padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:6px;line-height:1.4}
+.qbtn{flex:1;padding:0;height:36px;font-size:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:rgba(224,227,236,.4);cursor:pointer;font-family:'DM Mono',monospace;min-width:0;-webkit-tap-highlight-color:transparent;transition:background .1s,color .1s,border-color .1s}
+.qbtn.active{background:rgba(0,240,122,.13);border-color:rgba(0,240,122,.3);color:#00f07a}
+.qbtn:disabled{opacity:.28;pointer-events:none}
 </style>
 </head>
 <body>
+<div id="root">
+<div class="notif" id="notif"></div>
 
-<!-- ═══════════════════════════════════════════════════════
-     PASTE YOUR FULL GAME HTML HERE
-     (everything from <style> to end of <script> tag)
-     from the last widget Claude built
-     ═══════════════════════════════════════════════════════ -->
+<div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;padding-top:max(10px,env(safe-area-inset-top))">
+  <div style="display:flex;align-items:center;gap:9px">
+    <div>
+      <div class="syne" style="font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.1">PREDICT<span style="color:#00f07a">X</span></div>
+      <div style="font-size:8px;color:rgba(224,227,236,.2);letter-spacing:.15em">SYNTHETIC ENGINE</div>
+    </div>
+    <div style="display:flex;align-items:center;font-size:9px;letter-spacing:.1em;color:#00f07a;padding:3px 8px;border:1px solid rgba(0,240,122,.25);border-radius:4px"><span class="ldot"></span>LIVE</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:8px;letter-spacing:.1em;color:rgba(224,227,236,.28)">BALANCE</div>
+    <div class="syne" style="font-size:21px;font-weight:700;color:#00f07a" id="balDisp">1,000 <span style="font-size:10px;opacity:.5">PRD</span></div>
+  </div>
+</div>
+
+<div style="overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.3);border-bottom:1px solid rgba(255,255,255,.05);padding:5px 0;flex-shrink:0">
+  <div style="display:inline-block;animation:scrollX 22s linear infinite;font-size:10px;letter-spacing:.08em;color:rgba(224,227,236,.3)">
+    PRED/USD <span style="color:#00f07a">+1.24%</span> &nbsp;·&nbsp; VOLT/X <span style="color:#f03055">-0.87%</span> &nbsp;·&nbsp; APEX/PRD <span style="color:#00f07a">+2.11%</span> &nbsp;·&nbsp; NOVA/USD <span style="color:#f03055">-0.43%</span> &nbsp;·&nbsp; FLUX/PRD <span style="color:#00f07a">+0.98%</span> &nbsp;·&nbsp; DRIFT/X <span style="color:#00f07a">+1.67%</span> &nbsp;·&nbsp; PEAK/PRD <span style="color:#f03055">-1.02%</span> &nbsp;&nbsp;&nbsp;
+    PRED/USD <span style="color:#00f07a">+1.24%</span> &nbsp;·&nbsp; VOLT/X <span style="color:#f03055">-0.87%</span> &nbsp;·&nbsp; APEX/PRD <span style="color:#00f07a">+2.11%</span> &nbsp;·&nbsp; NOVA/USD <span style="color:#f03055">-0.43%</span> &nbsp;·&nbsp; FLUX/PRD <span style="color:#00f07a">+0.98%</span> &nbsp;·&nbsp; DRIFT/X <span style="color:#00f07a">+1.67%</span> &nbsp;·&nbsp; PEAK/PRD <span style="color:#f03055">-1.02%</span>
+  </div>
+</div>
+
+<div style="padding:7px 14px;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0">
+  <div>
+    <div style="font-size:8px;letter-spacing:.12em;color:rgba(224,227,236,.25);margin-bottom:1px">PRED/USD</div>
+    <div class="syne" style="font-size:24px;font-weight:800;line-height:1;transition:color .15s" id="bigPx">—</div>
+  </div>
+  <div style="font-size:13px;font-weight:500;transition:color .15s;min-width:60px" id="pctEl">+0.00%</div>
+  <div style="display:flex;gap:10px;font-size:10px">
+    <span style="color:rgba(224,227,236,.3)">H:<span style="color:#00f07a" id="oH">—</span></span>
+    <span style="color:rgba(224,227,236,.3)">L:<span style="color:#f03055" id="oL">—</span></span>
+  </div>
+  <div style="margin-left:auto;text-align:right">
+    <div style="font-size:11px;font-weight:500;min-height:16px" id="streakEl"></div>
+    <div style="font-size:9px;color:rgba(224,227,236,.28)" id="playersEl">— players</div>
+  </div>
+</div>
+
+<div style="display:flex;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <button class="tab on" onclick="switchTab('trade',this)">Trade</button>
+  <button class="tab" onclick="switchTab('board',this)">Leaders</button>
+  <button class="tab" onclick="switchTab('stats',this)">Stats</button>
+</div>
+
+<div class="scroll-area">
+<div id="tabTrade" style="padding:10px 12px">
+
+  <div id="chartWrap" style="border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;margin-bottom:8px;position:relative;transition:border-color .3s">
+    <canvas id="cv" style="width:100%;height:150px;display:block"></canvas>
+    <div style="position:absolute;top:6px;left:8px;display:flex;gap:5px;align-items:center">
+      <div style="font-size:10px;color:rgba(224,227,236,.4)" id="rndLbl">RND —</div>
+      <div style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(0,240,122,.1);color:#00f07a;border:1px solid rgba(0,240,122,.2)">1.9×</div>
+    </div>
+    <div style="position:absolute;top:6px;right:8px;font-size:9px;color:rgba(224,227,236,.32)" id="entryLbl"></div>
+    <div id="phaseOverlay" style="display:none;position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:500;padding:3px 12px;border-radius:20px;white-space:nowrap"></div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <div style="text-align:center;min-width:72px">
+      <div style="font-size:7px;letter-spacing:.14em;color:rgba(224,227,236,.26)">TIME LEFT</div>
+      <div class="syne" id="bigTimer" style="font-size:48px;font-weight:800;line-height:1;transition:color .3s">—</div>
+      <div style="font-size:7px;letter-spacing:.1em;color:rgba(224,227,236,.26)">SEC</div>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+        <span style="color:#00f07a;font-weight:500" id="upLbl">▲ 50%</span>
+        <span style="color:#f03055;font-weight:500" id="dnLbl">50% ▼</span>
+      </div>
+      <div style="height:8px;border-radius:4px;background:#f03055;overflow:hidden;margin-bottom:5px">
+        <div id="upBar" style="height:100%;width:50%;background:#00f07a;border-radius:4px;transition:width .4s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(224,227,236,.28)">
+        <span id="upPRD">0 PRD</span>
+        <span id="crowdMsg" style="font-size:9px"></span>
+        <span id="dnPRD">0 PRD</span>
+      </div>
+      <div style="margin-top:6px;height:3px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden">
+        <div id="tBar" style="height:100%;width:100%;border-radius:2px;transition:width .38s linear,background .3s;background:#00f07a"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="phaseBanner" style="display:none"></div>
+  <div id="resultCard" style="display:none;border-radius:12px;padding:14px;margin-bottom:8px;text-align:center"></div>
+
+  <div id="nextRndBar" style="display:none;border-radius:8px;padding:10px 14px;text-align:center;background:rgba(0,240,122,.07);border:1px solid rgba(0,240,122,.2);margin-bottom:8px">
+    <div style="font-size:10px;color:rgba(224,227,236,.45);margin-bottom:2px">NEXT ROUND IN</div>
+    <div class="syne" style="font-size:28px;font-weight:800;color:#00f07a" id="nextCnt">2</div>
+  </div>
+
+  <div style="text-align:center;margin-bottom:8px;font-size:12px;color:rgba(224,227,236,.32)">
+    Stake <span style="color:#e0e3ec" id="stakeShow">50</span> PRD → Win <span style="color:#00f07a;font-weight:500" id="winShow">95</span> PRD
+  </div>
+
+  <div class="card" style="padding:12px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:9px;letter-spacing:.1em;color:rgba(224,227,236,.3)">STAKE</span>
+      <span class="syne" style="font-size:22px;font-weight:700;color:#00f07a"><span id="betAmt">50</span> <span style="font-size:10px;opacity:.5">PRD</span></span>
+    </div>
+    <div style="padding:2px 0"><input class="sl" type="range" id="betSl" min="10" max="500" step="10" value="50" oninput="setBet(+this.value)"></div>
+    <div style="display:flex;gap:5px;margin-top:10px" id="qBtns"></div>
+  </div>
+
+  <div id="betBtns" style="display:flex;gap:10px;margin-bottom:10px">
+    <button class="btn-up" id="bUp" onclick="doBet('UP')">▲ LONG</button>
+    <button class="btn-dn" id="bDn" onclick="doBet('DOWN')">▼ SHORT</button>
+  </div>
+  <div id="activeBet" style="display:none;border-radius:12px;padding:15px;text-align:center;margin-bottom:8px"></div>
+
+  <div class="card" style="padding:10px 12px;margin-bottom:8px">
+    <div style="font-size:8px;letter-spacing:.14em;color:rgba(224,227,236,.22);margin-bottom:7px">LIVE ACTIVITY</div>
+    <div id="actFeed"></div>
+  </div>
+
+  <div id="histSec" style="display:none;margin-bottom:8px">
+    <div style="font-size:8px;letter-spacing:.15em;color:rgba(224,227,236,.22);margin-bottom:7px">ROUND HISTORY</div>
+    <div id="histRow" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<div id="tabBoard" style="display:none;padding:10px 12px">
+  <div style="font-size:8px;letter-spacing:.15em;color:rgba(224,227,236,.22);margin-bottom:10px">TODAY'S TOP TRADERS</div>
+  <div id="top3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px"></div>
+  <div id="lbList"></div>
+</div>
+
+<div id="tabStats" style="display:none;padding:10px 12px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px" id="statCards"></div>
+  <div class="card" style="padding:14px" id="engineInfo"></div>
+</div>
+</div>
+</div>
 
 <script>
-  // Register service worker for PWA (offline support)
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    });
-  }
+const C={MIN:880,MAX:1120,START:1000,NOISE:.0028,TREND_STR:.0009,SPIKE_P:.07,SPIKE_M:.009,EVENT_P:.18,EVENT_M:.024,NM_SECS:5,NM_PULL:.3,FEE:.02,MULT:1.9,TICK_MS:380,TPC:4};
+const S={bal:1000,bet:50,myBet:null,phase:'waiting',rndNum:0,timeLeft:0,dur:30,price:1000,priceHist:[],candles:[],curC:null,tIC:0,tUp:0,tDn:0,streak:0,wins:0,losses:0,history:[],round:null,tDir:0,tLeft2:0,tickIv:null,nextIv:null,elapsed:0,players:128,
+lb:[{n:'0xNexus',b:18820,s:9,w:187},{n:'voidTrader',b:13340,s:5,w:112},{n:'moonSniper',b:10870,s:3,w:94},{n:'rugSurvivor',b:8210,s:0,w:78},{n:'blockHunter',b:6440,s:2,w:61},{n:'alpha_wolf',b:5120,s:1,w:54}],feed:[]};
+function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function mr(p){const mid=(C.MIN+C.MAX)/2,r=(C.MAX-C.MIN)/2;return-((p-mid)/r)*.003;}
+function nT(){if(S.tLeft2<=0){const r=Math.random();S.tDir=r<.33?-1:r<.66?0:1;S.tLeft2=2+Math.floor(Math.random()*6);}S.tLeft2--;return S.tDir;}
+function genPath(start,settle,ticks,trend){
+  const path=[],ev=Math.floor(Math.random()*ticks*.5);
+  const hasEv=Math.random()<C.EVENT_P,shock=hasEv?C.EVENT_M*(Math.random()>.5?1:-1):0;
+  let p=start;const nmS=ticks-Math.floor(C.NM_SECS*1000/C.TICK_MS);
+  for(let t=0;t<ticks;t++){
+    const prog=t/ticks,tf=trend*C.TREND_STR*p,ns=gauss()*C.NOISE*p;
+    const sp=Math.random()<C.SPIKE_P?(Math.random()>.5?1:-1)*C.SPIKE_M*p:0;
+    const sh=t===ev?shock*p:0,rv=mr(p)*p;
+    const pull=(settle-p)*Math.pow(prog,2.2)*.13;
+    const nm=t>=nmS&&t<ticks-2?(start-p)*C.NM_PULL:0;
+    p=Math.max(C.MIN,Math.min(C.MAX,p+tf+ns+sp+sh+rv+pull+nm));
+    path.push(+p.toFixed(3));}
+  path[path.length-1]=settle;return path;}
+function pushTick(price){
+  if(!S.curC){S.curC={o:price,h:price,l:price,c:price};S.tIC=1;}
+  else{S.curC.h=Math.max(S.curC.h,price);S.curC.l=Math.min(S.curC.l,price);S.curC.c=price;S.tIC++;
+    if(S.tIC>=C.TPC){S.candles.push({...S.curC});if(S.candles.length>50)S.candles.shift();S.curC={o:price,h:price,l:price,c:price};S.tIC=0;}}}
+function drawChart(){
+  const cv=document.getElementById('cv');
+  const dpr=Math.min(window.devicePixelRatio||1,3);
+  const rect=cv.getBoundingClientRect();
+  const W=Math.round(rect.width*dpr),H=Math.round(rect.height*dpr);
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
+  const all=[...S.candles];if(S.curC)all.push({...S.curC});if(all.length<2)return;
+  const PL=6,PR=46,PT=16,PB=20,cw=W-PL-PR,ch=H-PT-PB;
+  const vis=all.slice(-24);
+  const pMax=Math.max(...vis.map(c=>c.h)),pMin=Math.min(...vis.map(c=>c.l));
+  const pad=(pMax-pMin)*.18||2;const lo=pMin-pad,hi=pMax+pad;
+  const py=p=>PT+ch*(1-(p-lo)/(hi-lo));
+  ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=dpr;
+  for(let i=0;i<=4;i++){const y=PT+(ch/4)*i;ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(W-PR,y);ctx.stroke();
+    ctx.fillStyle='rgba(224,227,236,.2)';ctx.font=`${10*dpr}px DM Mono`;ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText((hi-(hi-lo)*(i/4)).toFixed(1),W-2,y);}
+  if(S.round&&S.phase!=='waiting'){
+    const ey=py(S.round.entryPrice);
+    ctx.strokeStyle='rgba(245,200,66,.5)';ctx.lineWidth=dpr;ctx.setLineDash([7*dpr,5*dpr]);
+    ctx.beginPath();ctx.moveTo(PL,ey);ctx.lineTo(W-PR,ey);ctx.stroke();ctx.setLineDash([]);}
+  const cStep=cw/vis.length,bw=Math.max(4,cStep*.56)*dpr;
+  const allVol=vis.map(c=>Math.abs(c.h-c.l)),maxVol=Math.max(...allVol)||1;
+  vis.forEach((c,i)=>{
+    const x=PL+cStep*(i+.5),isUp=c.c>=c.o,col=isUp?'#00f07a':'#f03055';
+    ctx.fillStyle=isUp?'rgba(0,240,122,.14)':'rgba(240,48,85,.14)';
+    const vh=ch*.1*(Math.abs(c.h-c.l)/maxVol);ctx.fillRect(x-bw/2,H-PB-vh+2,bw,vh);
+    ctx.strokeStyle=col;ctx.lineWidth=Math.max(1,dpr*.8);
+    const bt=py(Math.max(c.o,c.c)),bb=py(Math.min(c.o,c.c)),bh=Math.max(2,bb-bt);
+    ctx.beginPath();ctx.moveTo(x,py(c.h));ctx.lineTo(x,bt);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x,bb);ctx.lineTo(x,py(c.l));ctx.stroke();
+    ctx.fillStyle=i===vis.length-1?(isUp?'rgba(0,240,122,.55)':'rgba(240,48,85,.55)'):col;
+    ctx.fillRect(x-bw/2,bt,bw,bh);});
+  const curY=py(S.price);
+  const upN=S.candles.length>0&&S.price>=(S.candles[S.candles.length-1]?.c||S.price);
+  ctx.strokeStyle=upN?'rgba(0,240,122,.6)':'rgba(240,48,85,.6)';
+  ctx.lineWidth=dpr;ctx.setLineDash([5*dpr,4*dpr]);
+  ctx.beginPath();ctx.moveTo(PL,curY);ctx.lineTo(W-PR,curY);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=upN?'#00f07a':'#f03055';ctx.font=`bold ${11*dpr}px DM Mono`;ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText(S.price.toFixed(2),W-PR+4,curY);}
+function startRound(){
+  clearInterval(S.nextIv);document.getElementById('nextRndBar').style.display='none';
+  S.rndNum++;S.myBet=null;S.tUp=0;S.tDn=0;S.phase='open';S.elapsed=0;
+  S.players=100+Math.floor(Math.random()*80);
+  const dur=22+Math.floor(Math.random()*19);S.dur=dur;
+  const totalTicks=Math.round(dur*1000/C.TICK_MS),lockTick=Math.floor(totalTicks*.47);
+  const dir=crypto.getRandomValues(new Uint8Array(1))[0]<128?'UP':'DOWN';
+  const movePct=.002+Math.random()*.013;
+  const settle=Math.max(C.MIN,Math.min(C.MAX,S.price*(1+(dir==='UP'?1:-1)*movePct)));
+  const path=genPath(S.price,settle,totalTicks,nT());
+  S.round={num:S.rndNum,direction:dir,settlementPrice:settle,entryPrice:S.price,path,totalTicks,lockTick,dur};
+  pushAct('🔥 '+S.players+' players in this round');
+  clearInterval(S.tickIv);
+  S.tickIv=setInterval(()=>{
+    S.elapsed++;S.timeLeft=Math.max(0,Math.round((S.round.totalTicks-S.elapsed)*C.TICK_MS/1000));
+    S.price=S.round.path[Math.min(S.elapsed,S.round.path.length-1)];
+    S.priceHist=[...S.priceHist.slice(-199),S.price];pushTick(S.price);
+    if(S.elapsed>=lockTick&&S.phase==='open')S.phase='locked';
+    renderAll();
+    if(S.elapsed>=S.round.totalTicks){clearInterval(S.tickIv);settleRound();}},C.TICK_MS);
+  renderAll();}
+function settleRound(){
+  S.phase='settled';const r=S.round;S.price=r.settlementPrice;pushTick(S.price);
+  const pool=S.tUp+S.tDn,fee=pool*C.FEE,rp=pool-fee,wp=r.direction==='UP'?S.tUp:S.tDn;
+  if(S.myBet){
+    const won=S.myBet.direction===r.direction;let payout=0;
+    if(won&&wp>0)payout=Math.min((S.myBet.amount/wp)*rp*C.MULT,rp);
+    S.bal=Math.max(0,S.bal+(won?payout:0));
+    const diff=((r.settlementPrice-r.entryPrice)/r.entryPrice*100).toFixed(3);
+    if(won){S.streak++;S.wins++;doConfetti();flashRoot('win');spawnFloat('+'+payout.toFixed(0)+' PRD','#00f07a');notify('+ '+payout.toFixed(0)+' PRD'+(S.streak>=3?' · '+S.streak+' STREAK!':''));pushAct('You won '+payout.toFixed(0)+' PRD');}
+    else{S.streak=0;S.losses++;flashRoot('lose');if(Math.abs(parseFloat(diff))<.07)shakeEl('root');notify(Math.abs(parseFloat(diff))<.07?'Near miss · Lost by '+diff+'%':'Lost · '+S.myBet.amount+' PRD');pushAct('You lost '+S.myBet.amount+' PRD');}
+    S.history.unshift({result:r.direction,myBet:S.myBet,won,payout,diff});}
+  renderAll();
+  let cnt=2;document.getElementById('nextRndBar').style.display='block';document.getElementById('nextCnt').textContent=cnt;
+  S.nextIv=setInterval(()=>{cnt--;document.getElementById('nextCnt').textContent=cnt;if(cnt<=0){clearInterval(S.nextIv);startRound();}},1000);}
+function doBet(dir){
+  if(S.phase!=='open'||S.myBet||S.bet>S.bal)return;
+  S.myBet={direction:dir,amount:S.bet};S.bal-=S.bet;
+  if(dir==='UP')S.tUp+=S.bet;else S.tDn+=S.bet;
+  const sim=Math.floor(Math.random()*S.bet*2.8+S.bet*.6);
+  if(dir==='UP')S.tDn+=sim;else S.tUp+=sim;
+  pushAct('You bet '+(dir==='UP'?'LONG':'SHORT')+' '+S.bet+' PRD');renderAll();}
+function setBet(v){S.bet=parseInt(v);document.getElementById('betAmt').textContent=v;document.getElementById('stakeShow').textContent=v;document.getElementById('winShow').textContent=Math.round(v*C.MULT);renderQBtns();}
+function renderAll(){
+  drawChart();
+  const prev=S.priceHist.length>1?S.priceHist[S.priceHist.length-2]:S.price,upN=S.price>=prev;
+  const bp=document.getElementById('bigPx');bp.textContent=S.price.toFixed(2);bp.style.color=upN?'#00f07a':'#f03055';
+  const first=S.priceHist[0]||S.price,chg=((S.price-first)/first*100).toFixed(2);
+  const pc=document.getElementById('pctEl');pc.textContent=(parseFloat(chg)>=0?'+':'')+chg+'%';pc.style.color=parseFloat(chg)>=0?'#00f07a':'#f03055';
+  if(S.curC){document.getElementById('oH').textContent=S.curC.h.toFixed(2);document.getElementById('oL').textContent=S.curC.l.toFixed(2);}
+  const st=document.getElementById('streakEl');
+  if(S.streak>=2){st.textContent='🔥 '+S.streak+' STREAK';st.style.color='#f5c842';}else st.textContent='';
+  document.getElementById('playersEl').textContent=S.players+' players';
+  document.getElementById('balDisp').innerHTML=Math.round(S.bal).toLocaleString()+' <span style="font-size:10px;opacity:.5">PRD</span>';
+  if(S.round){document.getElementById('rndLbl').textContent='RND #'+S.rndNum;document.getElementById('entryLbl').textContent='ENTRY '+S.round.entryPrice.toFixed(2);}
+  const bt=document.getElementById('bigTimer');bt.textContent=S.timeLeft;
+  if(S.timeLeft<=3&&S.phase!=='settled'){bt.style.color='#f03055';bt.style.animation='timerFast .38s infinite';}
+  else if(S.timeLeft<=10&&S.phase!=='settled'){bt.style.color='#f5c842';bt.style.animation='timerPulse .6s infinite';}
+  else{bt.style.color='#e0e3ec';bt.style.animation='none';}
+  const pct=S.round?S.timeLeft/S.round.dur:1,tc=S.timeLeft>10?'#00f07a':S.timeLeft>5?'#f5c842':'#f03055';
+  document.getElementById('tBar').style.width=(pct*100).toFixed(1)+'%';document.getElementById('tBar').style.background=tc;
+  const pool=S.tUp+S.tDn,upP=pool?Math.round(S.tUp/pool*100):50;
+  document.getElementById('upLbl').textContent='▲ '+upP+'%';document.getElementById('dnLbl').textContent=(100-upP)+'% ▼';
+  document.getElementById('upBar').style.width=upP+'%';
+  document.getElementById('upPRD').textContent=S.tUp.toFixed(0)+' PRD';document.getElementById('dnPRD').textContent=S.tDn.toFixed(0)+' PRD';
+  const cm=document.getElementById('crowdMsg');
+  if(upP>=65){cm.textContent='🔥 Majority LONG';cm.style.color='#00f07a';}
+  else if(upP<=35){cm.textContent='⚠️ Crowd SHORT';cm.style.color='#f03055';}else cm.textContent='';
+  const cw2=document.getElementById('chartWrap'),po=document.getElementById('phaseOverlay');
+  if(S.phase==='locked'){
+    cw2.style.animation='glowY 1s infinite';cw2.style.borderColor='rgba(245,200,66,.5)';
+    po.style.display='block';po.style.background='rgba(245,200,66,.1)';po.style.border='1px solid rgba(245,200,66,.3)';po.style.color='#f5c842';
+    po.textContent=S.timeLeft>10?'⚡ Round Locked':S.timeLeft>5?'🎯 Outcome Approaching':'🔥 Final Seconds';}
+  else{cw2.style.animation='none';cw2.style.borderColor='rgba(255,255,255,.08)';po.style.display='none';}
+  const rc=document.getElementById('resultCard');
+  if(S.phase==='settled'&&S.history.length>0&&S.history[0].myBet){
+    const last=S.history[0],col=last.won?'#00f07a':'#f03055';
+    rc.style.cssText=`display:block;border-radius:12px;padding:14px;margin-bottom:8px;text-align:center;animation:slideUp .2s ease;background:${last.won?'rgba(0,240,122,.07)':'rgba(240,48,85,.07)'};border:1px solid ${last.won?'rgba(0,240,122,.25)':'rgba(240,48,85,.25)'}`;
+    rc.innerHTML=`<div class="syne" style="font-size:30px;font-weight:800;color:${col}">${last.won?'+ '+last.payout.toFixed(0)+' PRD':'REKT'}</div><div style="font-size:11px;color:rgba(224,227,236,.4);margin-top:4px">${last.won?'Correct call':'Lost by '+Math.abs(parseFloat(last.diff))+'%'} · <span style="color:${S.round.direction==='UP'?'#00f07a':'#f03055'}">${S.round.direction} ${S.round.direction==='UP'?'▲':'▼'}</span></div>`;}
+  else if(S.phase!=='settled')rc.style.display='none';
+  const canBet=S.phase==='open'&&!S.myBet;
+  document.getElementById('bUp').disabled=!canBet||S.bet>S.bal;document.getElementById('bDn').disabled=!canBet||S.bet>S.bal;
+  const ab=document.getElementById('activeBet'),bb=document.getElementById('betBtns');
+  if(S.myBet){
+    bb.style.display='none';ab.style.display='block';
+    const col2=S.myBet.direction==='UP'?'#00f07a':'#f03055';
+    const bd=S.myBet.direction==='UP'?'rgba(0,240,122,.3)':'rgba(240,48,85,.3)';
+    const bg=S.myBet.direction==='UP'?'rgba(0,240,122,.06)':'rgba(240,48,85,.06)';
+    ab.style.cssText=`display:block;border-radius:12px;padding:14px;text-align:center;margin-bottom:8px;border:1px solid ${bd};background:${bg}`;
+    ab.innerHTML=`<div style="font-size:9px;letter-spacing:.1em;color:rgba(224,227,236,.28);margin-bottom:5px">POSITION OPEN</div><div class="syne" style="font-size:26px;font-weight:800;color:${col2}">${S.myBet.direction==='UP'?'▲ LONG':'▼ SHORT'} · ${S.myBet.amount} PRD</div><div style="font-size:11px;color:rgba(224,227,236,.28);margin-top:4px">Target ~${(S.myBet.amount*C.MULT).toFixed(0)} PRD if correct</div>`;}
+  else{ab.style.display='none';bb.style.display='flex';}
+  const sl=document.getElementById('betSl');sl.max=Math.min(500,S.bal);
+  if(S.bet>S.bal){S.bet=Math.max(10,Math.floor(S.bal/10)*10);sl.value=S.bet;document.getElementById('betAmt').textContent=S.bet;}
+  if(S.history.length>0){
+    document.getElementById('histSec').style.display='block';
+    document.getElementById('histRow').innerHTML=S.history.slice(0,12).map(h=>`<div style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;position:relative;background:${h.result==='UP'?'rgba(0,240,122,.1)':'rgba(240,48,85,.1)'};border:1px solid ${h.result==='UP'?'rgba(0,240,122,.22)':'rgba(240,48,85,.22)'};color:${h.result==='UP'?'#00f07a':'#f03055'}">${h.result==='UP'?'▲':'▼'}${h.myBet?`<div style="position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:${h.won?'#00f07a':'#f03055'};border:1px solid #03050b"></div>`:''}</div>`).join('');}}
+function renderQBtns(){
+  const canBet=S.phase==='open'&&!S.myBet;
+  document.getElementById('qBtns').innerHTML=[25,50,100,250,'MAX'].map(a=>{
+    const val=a==='MAX'?Math.min(500,S.bal):a,isA=S.bet===val&&a!=='MAX';
+    return`<button class="qbtn${isA?' active':''}"${(val>S.bal||!canBet)?' disabled':''} onclick="setBet(${val});document.getElementById('betSl').value=${val}">${a}</button>`;}).join('');}
+function pushAct(msg){
+  S.feed.unshift({t:msg});if(S.feed.length>5)S.feed.pop();
+  document.getElementById('actFeed').innerHTML=S.feed.map(a=>`<div class="actFeed"><span style="color:rgba(0,240,122,.45);font-size:8px;flex-shrink:0">●</span>${a.t}</div>`).join('');}
+setInterval(()=>{
+  const n=['alpha_wolf','voidTrader','moon_x','rekt_lord','degen_99'];
+  const f=[()=>n[Math.floor(Math.random()*5)]+' won '+(50+Math.floor(Math.random()*300))+' PRD',()=>(90+Math.floor(Math.random()*80))+' players in round',()=>(Math.floor(Math.random()*5)+2)+' players on streak',()=>n[Math.floor(Math.random()*3)]+' bet '+(25*Math.ceil(Math.random()*10))+' PRD'];
+  pushAct(f[Math.floor(Math.random()*f.length)]());},3800);
+function notify(msg){const el=document.getElementById('notif');el.textContent=msg;el.style.opacity='1';el.style.animation='none';void el.offsetWidth;el.style.animation='popIn .25s ease forwards';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',3800);}
+function flashRoot(type){const r=document.getElementById('root');r.style.animation='none';void r.offsetWidth;r.style.animation=(type==='win'?'winFlash':'loseFlash')+' .65s ease forwards';}
+function shakeEl(id){const el=document.getElementById(id);el.style.animation='none';void el.offsetWidth;el.style.animation='shake .4s ease';setTimeout(()=>el.style.animation='',420);}
+function spawnFloat(txt,col){const el=document.createElement('div');el.className='floatPRD';el.style.cssText='color:'+col+';top:40%';el.textContent=txt;document.getElementById('root').appendChild(el);setTimeout(()=>el.remove(),1050);}
+function doConfetti(){const cols=['#00f07a','#f5c842','#f03055','#00ddff','#f08c3e'];for(let i=0;i<32;i++){const d=document.createElement('div');d.className='cf';d.style.cssText=`left:${Math.random()*100}%;top:15%;width:${5+Math.random()*5}px;height:${5+Math.random()*5}px;background:${cols[i%5]};border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.1+Math.random()*1.4}s;animation-delay:${Math.random()*.35}s`;document.body.appendChild(d);setTimeout(()=>d.remove(),(3+Math.random())*1000);}}
+function switchTab(name,btn){
+  ['Trade','Board','Stats'].forEach(t=>document.getElementById('tab'+t).style.display='none');
+  document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1)).style.display='block';
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  if(name==='board')renderLB();if(name==='stats')renderStats();}
+function renderLB(){
+  const lb=[...S.lb,{n:'YOU',b:Math.round(S.bal),s:S.streak,w:S.wins,me:true}];lb.sort((a,b)=>b.b-a.b);
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('top3').innerHTML=lb.slice(0,3).map((p,i)=>`<div class="card" style="padding:11px 8px;text-align:center;${p.me?'border-color:rgba(0,240,122,.3)':''}"><div style="font-size:18px;margin-bottom:3px">${medals[i]}</div><div style="font-size:11px;color:${p.me?'#00f07a':'#e0e3ec'};margin-bottom:3px">${p.n}</div><div class="syne" style="font-size:15px;font-weight:700;color:#00f07a">${p.b.toLocaleString()}</div><div style="font-size:8px;color:rgba(224,227,236,.28)">${p.w}W</div></div>`).join('');
+  document.getElementById('lbList').innerHTML=lb.slice(3).map((p,i)=>`<div class="card" style="padding:10px 13px;margin-bottom:6px;display:flex;align-items:center;gap:11px;${p.me?'border-color:rgba(0,240,122,.25);background:rgba(0,240,122,.03)':''}"><div style="font-size:13px;color:rgba(224,227,236,.22);width:18px">${i+4}</div><div style="flex:1"><div style="font-size:12px;color:${p.me?'#00f07a':'#e0e3ec'}">${p.n}</div><div style="font-size:9px;color:rgba(224,227,236,.26);margin-top:1px">${p.w}W${p.s>0?' · STK '+p.s:''}</div></div><div class="syne" style="font-size:13px;font-weight:700;color:#00f07a">${p.b.toLocaleString()}</div></div>`).join('');}
+function renderStats(){
+  const wr=S.wins+S.losses>0?((S.wins/(S.wins+S.losses))*100).toFixed(0)+'%':'—';
+  document.getElementById('statCards').innerHTML=[{l:'Wins',v:S.wins,c:'#00f07a'},{l:'Losses',v:S.losses,c:'#f03055'},{l:'Win Rate',v:wr,c:'#f5c842'},{l:'Streak',v:S.streak,c:'#f08c3e'}].map(s=>`<div class="card" style="padding:14px"><div style="font-size:8px;letter-spacing:.12em;color:rgba(224,227,236,.26);margin-bottom:7px">${s.l.toUpperCase()}</div><div class="syne" style="font-size:30px;font-weight:800;color:${s.c}">${s.v}</div></div>`).join('');
+  document.getElementById('engineInfo').innerHTML=`<div style="font-size:8px;letter-spacing:.12em;color:rgba(224,227,236,.2);margin-bottom:10px">ENGINE</div>`+[['Asset','PRED (synthetic)'],['Rounds','22–40 seconds'],['Tick','380ms'],['Outcome','Crypto 50/50 RNG'],['Near-miss','Last 5s engineered'],['Fee','2% per round'],['Payout','1.9× stake']].map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(224,227,236,.28)">${k}</span><span style="color:#e0e3ec">${v}</span></div>`).join('');}
+for(let i=0;i<60;i++){S.price=Math.max(C.MIN,Math.min(C.MAX,S.price+gauss()*C.NOISE*S.price));S.priceHist.push(S.price);pushTick(S.price);}
+['🔥 156 players online','voidTrader won 340 PRD','3 players on win streak','0xNexus bet 250 PRD'].forEach(t=>pushAct(t));
+document.getElementById('stakeShow').textContent=S.bet;document.getElementById('winShow').textContent=Math.round(S.bet*C.MULT);
+renderQBtns();startRound();
 </script>
-
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
 </body>
 </html>
