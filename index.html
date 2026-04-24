@@ -1170,10 +1170,18 @@ function renderHistPills(){
 
 function renderQBtns(){
   const canBet=S.phase==='open'&&!S.myBet;
-  const html=[25,50,100,250,'MAX'].map(a=>{
+  const presets=[25,50,100,250,'MAX'].map(a=>{
     const val=a==='MAX'?Math.min(500,S.bal):a,isA=S.bet===val&&a!=='MAX';
     return`<button class="qbtn${isA?' active':''}"${(val>S.bal||!canBet)?' disabled':''} onclick="setBet(${val})">${a}</button>`;
   }).join('');
+  const divider=`<span style="width:1px;background:rgba(255,255,255,.12);margin:0 3px;align-self:stretch;display:inline-block;border-radius:1px"></span>`;
+  const mults=[2,3,5].map(m=>{
+    const val=Math.min(500,Math.floor(S.bal/10)*10,S.bet*m);
+    const tooLow=val<=S.bet;
+    const disabled=val>S.bal||tooLow||!canBet;
+    return`<button class="qbtn"${disabled?' disabled':''} onclick="setBet(${val})" style="color:#f5c518;border-color:rgba(245,197,24,.3);background:rgba(245,197,24,.07)">${m}×</button>`;
+  }).join('');
+  const html=presets+divider+mults;
   document.getElementById('qBtns').innerHTML=html;
   document.getElementById('mQBtns').innerHTML=html;
 }
