@@ -681,12 +681,24 @@ function drawCandles(cvEl,wrapEl,candles,curC,price,round,phase,opts={}){
       ctx.fillText((hi-(hi-lo)*(i/4)).toFixed(1),W-2,y);
     }
     if(round){
-      const ey=py(round.entryPrice);
-      ctx.strokeStyle='rgba(245,197,24,.5)';ctx.lineWidth=1.5*dpr;ctx.setLineDash([6*dpr,4*dpr]);
+      // Show user's personal entry line if they have a bet, else round open price
+      const hasPersonalEntry=S.myBet&&S.myBet.entryPrice;
+      const linePrice=hasPersonalEntry?S.myBet.entryPrice:round.entryPrice;
+      const lineLabel=hasPersonalEntry
+        ?((S.myBet.direction==='UP'?'▲ ENTRY ':'▼ ENTRY ')+linePrice.toFixed(1))
+        :('OPEN '+linePrice.toFixed(1));
+      const lineCol=hasPersonalEntry
+        ?(S.myBet.direction==='UP'?'rgba(0,230,118,.7)':'rgba(244,67,54,.7)')
+        :'rgba(245,197,24,.5)';
+      const lineFill=hasPersonalEntry
+        ?(S.myBet.direction==='UP'?'rgba(0,230,118,.65)':'rgba(244,67,54,.65)')
+        :'rgba(245,197,24,.6)';
+      const ey=py(linePrice);
+      ctx.strokeStyle=lineCol;ctx.lineWidth=1.5*dpr;ctx.setLineDash([6*dpr,4*dpr]);
       ctx.beginPath();ctx.moveTo(PL,ey);ctx.lineTo(W-PR,ey);ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle='rgba(245,197,24,.6)';ctx.font=`bold ${8*dpr}px DM Mono`;
+      ctx.fillStyle=lineFill;ctx.font=`bold ${8*dpr}px DM Mono`;
       ctx.textAlign='right';ctx.textBaseline='middle';
-      ctx.fillText('START '+round.entryPrice.toFixed(1),W-PR-5,ey-9*dpr);
+      ctx.fillText(lineLabel,W-PR-5,ey-9*dpr);
     }
     ctx.strokeStyle='rgba(0,230,118,.45)';ctx.lineWidth=2*dpr;ctx.setLineDash([]);
     ctx.beginPath();ctx.moveTo(PL+cw*.08,PT);ctx.lineTo(PL+cw*.08,PT+ch);ctx.stroke();
@@ -980,10 +992,15 @@ function settleRound(){
 
   const mult=r.direction==='UP'?S.upMult:S.dnMult;
   if(S.myBet){
-    const won=S.myBet.direction===r.direction;
+    // Win condition: settlement price is above user's entry (LONG) or below (SHORT).
+    // User wins if price moved the way they predicted FROM WHERE THEY ENTERED.
+    const ep=S.myBet.entryPrice;
+    const won=S.myBet.direction==='UP'
+      ? r.settlementPrice > ep
+      : r.settlementPrice < ep;
     let payout=0;if(won)payout=+(S.myBet.amount*mult).toFixed(2);
     S.bal=Math.max(0,+(S.bal+(won?payout:0)).toFixed(2));
-    const diff=((r.settlementPrice-r.entryPrice)/r.entryPrice*100).toFixed(3);
+    const diff=((r.settlementPrice-ep)/ep*100).toFixed(3);
     S.history[0]={...S.history[0],myBet:S.myBet,won,payout,diff};
     if(won){
       S.streak++;S.wins++;doConfetti();flashRoot('win');
@@ -1018,7 +1035,9 @@ function addWinner(name,amt,isYou){S.winners.unshift({name,amt,isYou});if(S.winn
 
 function doBet(dir){
   if(S.phase!=='open'||S.myBet||S.bet>S.bal)return;
-  S.myBet={direction:dir,amount:S.bet};S.bal=+(S.bal-S.bet).toFixed(2);
+  // Capture the live price at the exact moment the user places their bet.
+  // This becomes the line on the chart — above/below this is their win condition.
+  S.myBet={direction:dir,amount:S.bet,entryPrice:S.price};S.bal=+(S.bal-S.bet).toFixed(2);
   if(dir==='UP')S.tUp+=S.bet;else S.tDn+=S.bet;
   calcPayouts();
   addChatMsg('YOU',dir==='UP'?MSG_UP[Math.floor(Math.random()*MSG_UP.length)]:MSG_DN[Math.floor(Math.random()*MSG_DN.length)],true);
@@ -1109,8 +1128,13 @@ function renderAll(){
       const bd=S.myBet.direction==='UP'?'rgba(0,230,118,.3)':'rgba(244,67,54,.3)';
       const bg2=S.myBet.direction==='UP'?'rgba(0,230,118,.08)':'rgba(244,67,54,.08)';
       const am=S.myBet.direction==='UP'?S.upMult:S.dnMult;
+      const ep=S.myBet.entryPrice;
+      const liveDiff=((S.price-ep)/ep*100);
+      const winning=S.myBet.direction==='UP'?S.price>ep:S.price<ep;
+      const pnlCol=winning?'#00e676':'#f44336';
+      const pnlStr=(liveDiff>=0?'+':'')+liveDiff.toFixed(3)+'%';
       ab.style.cssText=`display:block;border-radius:8px;padding:9px;text-align:center;border:1px solid ${bd};background:${bg2}`;
-      ab.innerHTML=`<div class="syne" style="font-size:17px;font-weight:800;color:${col2}">${S.myBet.direction==='UP'?'▲ LONG':'▼ SHORT'} · ${S.myBet.amount} PRD</div><div style="font-size:10px;color:rgba(226,232,240,.35);margin-top:2px">Payout: ${am.toFixed(2)}× · Target <span style="color:${col2}">${(S.myBet.amount*am).toFixed(0)} PRD</span></div>`;
+      ab.innerHTML=`<div class="syne" style="font-size:17px;font-weight:800;color:${col2}">${S.myBet.direction==='UP'?'▲ LONG':'▼ SHORT'} · ${S.myBet.amount} PRD</div><div style="font-size:10px;color:rgba(226,232,240,.35);margin-top:2px">Entry: ${ep.toFixed(1)} · <span style="color:${pnlCol};font-weight:600">${pnlStr}</span> · Win: <span style="color:${col2}">${(S.myBet.amount*am).toFixed(0)} PRD</span></div>`;
     } else {ab.style.display='none';bb.style.display='flex';}
     if(S.phase==='settled'&&!S.myBet&&S.history.length>0){
       const last=S.history[0];const col=last.won?'#00e676':'#f44336';
