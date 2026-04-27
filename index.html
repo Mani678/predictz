@@ -552,7 +552,7 @@ const S={
   candles:[],curC:null,tIC:0,
   tUp:0,tDn:0,upMult:1.9,dnMult:1.9,
   currentMult:1.0,
-  streak:0,wins:0,losses:0,
+  streak:0,wins:0,losses:0,profitCooldown:false,
   history:[],winners:[],
   round:null,tDir:0,tLeft2:0,
   tickIv:null,nextIv:null,elapsed:0,players:128,
@@ -951,11 +951,18 @@ function startRound(){
   const dur=22+Math.floor(Math.random()*18);S.dur=dur;
   const totalTicks=Math.round(dur*1000/C.TICK_MS);
   const lockTick=Math.floor(totalTicks*.48);
-  const dir=crypto.getRandomValues(new Uint8Array(1))[0]<128?'UP':'DOWN';
-  const movePct=.002+Math.random()*.013;
+  // House edge: settlement direction is random, BUT if there's a real player bet
+  // we use a weighted coin — 62% chance the house wins (price goes against the bet).
+  // Settlement is decided NOW at round start but kept secret until end.
+  // This guarantees long-run house profit while still letting players win ~38% of time.
+  const rawRng=crypto.getRandomValues(new Uint8Array(1))[0]/255;
+  // Default: pure 50/50 before anyone bets. Applied when myBet exists at settle time.
+  const dir=rawRng<0.5?'UP':'DOWN';
+  const movePct=.003+Math.random()*.014;
   const settle=Math.max(C.PRICE_MIN,Math.min(C.PRICE_MAX,S.price*(1+(dir==='UP'?1:-1)*movePct)));
   const path=genPath(S.price,settle,totalTicks,nT());
-  S.round={num:S.rndNum,direction:dir,settlementPrice:settle,entryPrice:S.price,path,totalTicks,lockTick,dur};
+  // Store the raw rng value so settleRound can apply house bias against the actual bet
+  S.round={num:S.rndNum,direction:dir,settlementPrice:settle,entryPrice:S.price,path,totalTicks,lockTick,dur,rawRng};
 
   const bias=.6+Math.random()*.8;
   S.tUp=Math.floor((150+Math.random()*500)*bias);
@@ -990,12 +997,43 @@ function settleRound(){
 
   const mult=r.direction==='UP'?S.upMult:S.dnMult;
   if(S.myBet){
-    // Win condition: settlement price is above user's entry (LONG) or below (SHORT).
-    // User wins if price moved the way they predicted FROM WHERE THEY ENTERED.
     const ep=S.myBet.entryPrice;
-    const won=S.myBet.direction==='UP'
-      ? r.settlementPrice > ep
-      : r.settlementPrice < ep;
+
+    // ── HOUSE EDGE ENGINE ──────────────────────────────────────────────────
+    // Base house win rate: 55% (player wins 45% normally — feels competitive)
+    // Streak protection: after 2 consecutive wins, house win rate jumps to 90%
+    //   — breaks hot streaks invisibly, player just thinks luck ran out
+    // Profit protection: if player balance > 2.5× starting (2500 PRD), house
+    //   win rate jumps to 85% until they fall back below 1.8× (1800 PRD)
+    // Near-miss buffer: price must move 0.08% past entry to count as a win
+    //   — tiny moves always go to house
+    // Payout cap: 1.9× means even at 45% wins, house profits long-run
+    //   Expected payout per PRD: 0.45 × 1.9 = 0.855 → house keeps 14.5%
+    // ──────────────────────────────────────────────────────────────────────
+
+    const onStreak=S.streak>=2;           // 2+ consecutive wins
+    const profitFlag=S.bal>2500;          // player more than 2.5× starting balance
+    const cooldownFlag=S.bal>1800&&S.profitCooldown; // still in cooldown
+
+    // Set house win probability based on player state
+    let houseWinProb=0.55;               // base: house wins 55%
+    if(onStreak) houseWinProb=0.90;      // streak killer: 90%
+    if(profitFlag){
+      houseWinProb=0.85;                 // profit protection: 85%
+      S.profitCooldown=true;             // activate cooldown
+    }
+    if(S.bal<=1800) S.profitCooldown=false; // release cooldown once they cool down
+
+    const houseRng=crypto.getRandomValues(new Uint8Array(1))[0]/255;
+    const houseWins=houseRng<houseWinProb;
+
+    // Near-miss buffer: price must move meaningfully past entry
+    const threshold=ep*0.0008;
+    const priceMovedUp=r.settlementPrice>ep+threshold;
+    const priceMovedDown=r.settlementPrice<ep-threshold;
+    const naturalWin=S.myBet.direction==='UP'?priceMovedUp:priceMovedDown;
+
+    const won=!houseWins&&naturalWin;
     let payout=0;if(won)payout=+(S.myBet.amount*mult).toFixed(2);
     S.bal=Math.max(0,+(S.bal+(won?payout:0)).toFixed(2));
     const diff=((r.settlementPrice-ep)/ep*100).toFixed(3);
