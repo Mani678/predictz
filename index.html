@@ -700,8 +700,6 @@ function drawCandles(cvEl,wrapEl,candles,curC,price,round,phase,opts={}){
       ctx.textAlign='right';ctx.textBaseline='middle';
       ctx.fillText(lineLabel,W-PR-5,ey-9*dpr);
     }
-    ctx.strokeStyle='rgba(0,230,118,.45)';ctx.lineWidth=2*dpr;ctx.setLineDash([]);
-    ctx.beginPath();ctx.moveTo(PL+cw*.08,PT);ctx.lineTo(PL+cw*.08,PT+ch);ctx.stroke();
   }
 
   const cStep=cw/maxC;
