@@ -1,12 +1,13 @@
 {
-  "name": "PredictX",
+  "name": "PredictX — Predict UP or DOWN",
   "short_name": "PredictX",
-  "description": "High-frequency synthetic prediction game",
+  "description": "High-frequency crypto prediction game. Bet UP or DOWN and win PRD tokens.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#03050b",
-  "theme_color": "#03050b",
+  "background_color": "#0b0f17",
+  "theme_color": "#0b0f17",
+  "categories": ["games", "finance"],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -21,13 +22,14 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["games", "finance"],
-  "screenshots": [
+  "screenshots": [],
+  "shortcuts": [
     {
-      "src": "/screenshot.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "name": "Play Now",
+      "short_name": "Play",
+      "description": "Jump straight into a round",
+      "url": "/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
